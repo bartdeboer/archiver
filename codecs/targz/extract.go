@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 )
 
-// extractTarGz handles the extraction of .tar.gz files.
-func ExtractTarGz(filePath, destDir string) error {
+// extract handles the extraction of .tar.gz files.
+func (c *Codec) Extract(filePath, destDir string) error {
 
 	file, err := os.Open(filePath)
 	if err != nil {

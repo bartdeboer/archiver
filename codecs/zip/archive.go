@@ -8,8 +8,14 @@ import (
 	"github.com/bartdeboer/archiver/codecs/codec"
 )
 
-// createZip creates a zip archive at archivePath containing the files specified in archiveMaps.
-func Create(archivePath string, files []codec.ArchiveMap) error {
+type Codec struct{}
+
+func New() *Codec {
+	return &Codec{}
+}
+
+// create creates a zip archive at archivePath containing the files specified in archiveMaps.
+func (c *Codec) Create(archivePath string, files []codec.ArchiveMap) error {
 	zipFile, err := os.Create(archivePath)
 	if err != nil {
 		return err

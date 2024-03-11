@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 )
 
-func ExtractZip(filePath, destDir string) error {
+// extract handles the extraction of .zip files.
+func (c *Codec) Extract(filePath, destDir string) error {
 	zipReader, err := zip.OpenReader(filePath)
 	if err != nil {
 		return err

@@ -10,8 +10,14 @@ import (
 	"github.com/bartdeboer/archiver/codecs/codec"
 )
 
-// createTarGz creates a .tar.gz archive at archivePath containing the files specified in files.
-func CreateTarGz(archivePath string, files []codec.ArchiveMap) error {
+type Codec struct{}
+
+func New() *Codec {
+	return &Codec{}
+}
+
+// create creates a .tar.gz archive at archivePath containing the files specified in files.
+func (c *Codec) Create(archivePath string, files []codec.ArchiveMap) error {
 	var buf bytes.Buffer
 	gzw := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gzw)
