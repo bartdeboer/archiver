@@ -2,17 +2,73 @@ package targz
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/bartdeboer/archiver/codecs/codec"
 )
 
-// extract handles the extraction of .tar.gz files.
-func (c *Codec) Extract(filePath, destDir string) error {
+type Codec struct{}
 
-	file, err := os.Open(filePath)
+func New() *Codec {
+	return &Codec{}
+}
+
+func (c *Codec) AppendExtension(name string) string {
+	return name + ".tar.gz"
+}
+
+// create creates a .tar.gz archive at archivePath containing the files specified in files.
+func (c *Codec) Create(archivePath string, files []codec.ArchiveMap) error {
+	var buf bytes.Buffer
+	gzw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gzw)
+
+	for _, fileMap := range files {
+		srcFile, err := os.Open(fileMap.Src)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		fileInfo, err := srcFile.Stat()
+		if err != nil {
+			return err
+		}
+
+		hdr := &tar.Header{
+			Name: fileMap.Dest, // Use the target path specified in FilePair
+			Mode: int64(fileInfo.Mode()),
+			Size: fileInfo.Size(),
+		}
+
+		if err := tw.WriteHeader(hdr); err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(tw, srcFile); err != nil {
+			return err
+		}
+	}
+
+	if err := tw.Close(); err != nil {
+		return err
+	}
+	if err := gzw.Close(); err != nil {
+		return err
+	}
+
+	return os.WriteFile(archivePath, buf.Bytes(), 0644)
+}
+
+// extract handles the extraction of .tar.gz files.
+func (c *Codec) Extract(archivePath, destDir string) error {
+
+	file, err := os.Open(archivePath)
 	if err != nil {
 		return fmt.Errorf("Error opening file: %v", err)
 	}

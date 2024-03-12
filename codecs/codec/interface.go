@@ -11,6 +11,7 @@ type ArchiveMap struct {
 // }
 
 type Codec interface {
-	Extract(filePath, destDir string) error
+	Extract(archivePath, destDir string) error
 	Create(archivePath string, files []ArchiveMap) error
+	AppendExtension(name string) string
 }
