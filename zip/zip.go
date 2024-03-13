@@ -5,22 +5,22 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/bartdeboer/archiver/codecs/codec"
 )
 
-type Codec struct{}
+type Zip struct{}
 
-func New() *Codec {
-	return &Codec{}
+func New() *Zip {
+	return &Zip{}
 }
 
-func (c *Codec) AppendExtension(name string) string {
-	return name + ".zip"
+const Extension string = ".zip"
+
+func (c *Zip) AppendExtension(name string) string {
+	return name + Extension
 }
 
 // create creates a zip archive at archivePath containing the files specified in archiveMaps.
-func (c *Codec) Create(archivePath string, files []codec.ArchiveMap) error {
+func (c *Zip) Create(archivePath string, files map[string]string) error {
 	zipFile, err := os.Create(archivePath)
 	if err != nil {
 		return err
@@ -30,8 +30,8 @@ func (c *Codec) Create(archivePath string, files []codec.ArchiveMap) error {
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
 
-	for _, fileMap := range files {
-		srcFile, err := os.Open(fileMap.Src)
+	for src, dest := range files {
+		srcFile, err := os.Open(src)
 		if err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func (c *Codec) Create(archivePath string, files []codec.ArchiveMap) error {
 		if err != nil {
 			return err
 		}
-		header.Name = fileMap.Dest  // Use the destination path specified in ArchiveMap
+		header.Name = dest          // Use the destination path specified in ArchiveMap
 		header.Method = zip.Deflate // Use compression
 
 		writer, err := zipWriter.CreateHeader(header)
@@ -63,7 +63,7 @@ func (c *Codec) Create(archivePath string, files []codec.ArchiveMap) error {
 }
 
 // extract handles the extraction of .zip files.
-func (c *Codec) Extract(archivePath, destDir string) error {
+func (c *Zip) Extract(archivePath, destDir string) error {
 	zipReader, err := zip.OpenReader(archivePath)
 	if err != nil {
 		return err

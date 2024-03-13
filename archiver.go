@@ -4,12 +4,53 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bartdeboer/archiver/codecs/codec"
-	"github.com/bartdeboer/archiver/codecs/targz"
-	"github.com/bartdeboer/archiver/codecs/zip"
+	"github.com/bartdeboer/archiver/targz"
+	"github.com/bartdeboer/archiver/zip"
 )
 
-func NewArchiverByPlatform(platform string) codec.Codec {
+type Archiver interface {
+	Extract(archivePath, destDir string) error
+	Create(archivePath string, files map[string]string) error
+	AppendExtension(name string) string
+}
+
+type implementation struct {
+	create    func() Archiver
+	extension string
+}
+
+var impls map[string]implementation
+
+func RegisterArchiver(name string, create func() Archiver, extension string) {
+	impls[name] = implementation{
+		create,
+		extension,
+	}
+}
+
+func init() {
+	impls = make(map[string]implementation)
+	RegisterArchiver("windows", func() Archiver { return zip.New() }, zip.Extension)
+	RegisterArchiver("targz", func() Archiver { return targz.New() }, targz.Extension)
+}
+
+func New(archType string) (Archiver, error) {
+	if impl, exists := impls[archType]; exists {
+		return impl.create(), nil
+	}
+	return nil, fmt.Errorf("unsupported type")
+}
+
+func NewByFilename(file string) (Archiver, error) {
+	for _, impl := range impls {
+		if strings.HasSuffix(file, impl.extension) {
+			return impl.create(), nil
+		}
+	}
+	return nil, fmt.Errorf("unsupported file extension")
+}
+
+func NewArchiverByPlatform(platform string) Archiver {
 	switch platform {
 	case "windows":
 		return zip.New()
@@ -18,34 +59,12 @@ func NewArchiverByPlatform(platform string) codec.Codec {
 	}
 }
 
-func NewArchiverByType(archType string) (codec.Codec, error) {
-	switch archType {
-	case "zip":
-		return zip.New(), nil
-	case "targz":
-		return targz.New(), nil
-	default:
-		return nil, fmt.Errorf("unsupported type")
-	}
-}
-
-func NewArchiverByFilename(file string) (codec.Codec, error) {
-	switch {
-	case strings.HasSuffix(file, ".zip"):
-		return zip.New(), nil
-	case strings.HasSuffix(file, ".tar.gz"):
-		return targz.New(), nil
-	default:
-		return nil, fmt.Errorf("unsupported file extension")
-	}
-}
-
 func AppendExtensionByPlatform(name, platform string) string {
 	return NewArchiverByPlatform(platform).AppendExtension(name)
 }
 
-func Create(archivePath string, files []codec.ArchiveMap) error {
-	arch, err := NewArchiverByFilename(archivePath)
+func Create(archivePath string, files map[string]string) error {
+	arch, err := NewByFilename(archivePath)
 	if err != nil {
 		return err
 	}
@@ -53,14 +72,14 @@ func Create(archivePath string, files []codec.ArchiveMap) error {
 }
 
 func Extract(archivePath, destDir string) error {
-	arch, err := NewArchiverByFilename(archivePath)
+	arch, err := NewByFilename(archivePath)
 	if err != nil {
 		return err
 	}
 	return arch.Extract(archivePath, destDir)
 }
 
-func CreateZip(archivePath string, files []codec.ArchiveMap) error {
+func CreateZip(archivePath string, files map[string]string) error {
 	return zip.New().Create(archivePath, files)
 }
 
@@ -68,7 +87,7 @@ func ExtractZip(archivePath, destDir string) error {
 	return zip.New().Extract(archivePath, destDir)
 }
 
-func CreateTARGZ(archivePath string, files []codec.ArchiveMap) error {
+func CreateTARGZ(archivePath string, files map[string]string) error {
 	return targz.New().Create(archivePath, files)
 }
 
