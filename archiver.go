@@ -87,10 +87,10 @@ func ExtractZip(archivePath, destDir string) error {
 	return zip.New().Extract(archivePath, destDir)
 }
 
-func CreateTARGZ(archivePath string, files map[string]string) error {
+func CreateTarGz(archivePath string, files map[string]string) error {
 	return targz.New().Create(archivePath, files)
 }
 
-func ExtractTARGZ(archivePath, destDir string) error {
+func ExtractTarGz(archivePath, destDir string) error {
 	return targz.New().Extract(archivePath, destDir)
 }
