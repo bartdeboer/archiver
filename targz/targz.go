@@ -10,20 +10,20 @@ import (
 	"path/filepath"
 )
 
-type TARGZ struct{}
+type TarGz struct{}
 
-func New() *TARGZ {
-	return &TARGZ{}
+func New() *TarGz {
+	return &TarGz{}
 }
 
 const Extension string = ".tar.gz"
 
-func (c *TARGZ) AppendExtension(name string) string {
+func (c *TarGz) AppendExtension(name string) string {
 	return name + Extension
 }
 
 // create creates a .tar.gz archive at archivePath containing the files specified in files.
-func (c *TARGZ) Create(archivePath string, files map[string]string) error {
+func (c *TarGz) Create(archivePath string, files map[string]string) error {
 	var buf bytes.Buffer
 	gzw := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gzw)
@@ -66,7 +66,7 @@ func (c *TARGZ) Create(archivePath string, files map[string]string) error {
 }
 
 // extract handles the extraction of .tar.gz files.
-func (c *TARGZ) Extract(archivePath, destDir string) error {
+func (c *TarGz) Extract(archivePath, destDir string) error {
 
 	file, err := os.Open(archivePath)
 	if err != nil {
